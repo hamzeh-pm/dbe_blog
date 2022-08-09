@@ -1,0 +1,23 @@
+{% extends 'blog/base.html' %}
+{% block title %}
+{{ post.title }}
+{% endblock title %}
+{% block content %}
+<h1>My Blog</h1>
+    <div class="card">
+        <div class="card-body">
+            <h2 class="card-title">
+                <a href="{{post.get_absolute_url}}">
+                    {{post.title}}
+                </a>
+            </h2>
+            <p>
+                published {{post.publish}} by {{post.author}}
+            </p>
+            <p class="card-text">{{post.body | truncatewords:30|linebreaks}}</p>
+        </div>
+    </div>
+{% endblock content %}
+
+
+    
