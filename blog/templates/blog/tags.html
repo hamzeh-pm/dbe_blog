@@ -1,0 +1,6 @@
+<h5>tags</h5>
+{% for tag in tags %}
+<ul class="list-group list-group-flush">
+    <li class="list-group-item"><a href="{% url 'blog:post_list_tag' tag.slug %}">{{tag}}</a></li>
+  </ul>
+{% endfor %}

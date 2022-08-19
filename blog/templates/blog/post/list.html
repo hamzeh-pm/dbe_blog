@@ -1,9 +1,16 @@
 {% extends 'blog/base.html' %}
+{% load blog_tags %}
+
 {% block title %}
 My Blog
 {% endblock title %}
 {% block content %}
 <h1>My Blog</h1>
+    
+    {% if tag %}
+        result post for <h4>{{tag}}</h4>
+    {% endif %}
+        
     {% for post in posts %}
     <div class="card">
         <div class="card-body">
@@ -24,6 +31,17 @@ My Blog
 
     {% include "blog/pagination.html" with page=page_obj %}
 {% endblock content %}
+
+
+{% block sidebar %}
+<h2>My Blog</h2>
+<p>Total Posts {% total_posts %}</p>
+{% include 'blog/tags.html' with tags=tag_list %}
+
+{% show_latest_posts 3 %}
+
+{% endblock sidebar %}
+    
 
 
     

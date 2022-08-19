@@ -1,4 +1,5 @@
 {% extends 'blog/base.html' %}
+{% load blog_tags %}
 {% block title %}
 {{ post.title }}
 {% endblock title %}
@@ -14,9 +15,54 @@
             <p>
                 published {{post.publish}} by {{post.author}}
             </p>
-            <p class="card-text">{{post.body | truncatewords:30|linebreaks}}</p>
+            <p class="card-text">{{ post.body|markdown_format }}</p>
+            <h6>Tags: {{post.tags.all|join:", "}}</h6>
         </div>
     </div>
+    
+    {% with comments.count as total_comment %}
+        <h5>number of total comment {{total_comment}}</h5>
+    {% endwith %}
+    <div class="container">
+        <p>similar posts</p>
+        <ul class="list-group list-group-flush">
+            {% for post in similar_post %}
+            <li class="list-group-item"><a href="{% url 'blog:post_detail' post.slug %}">{{post}}</a></li>
+            {% empty %}
+            <p>no similar post yet</p>
+            {% endfor %}
+          </ul>
+    </div>
+    <div class='container'>
+        
+        {% for comment in comments %}
+            {{comment}}
+            {% empty %}
+            <p>there is no comment</p>
+        {% endfor %}
+            
+    </div>
+    <form method='POST'>
+        {% if new_comment %}
+    <div class="alert alert-success" role="alert">
+        New Comment Sent Successfully
+      </div>
+    {% endif %}
+            {% for field in comment_form %}
+            <div class="mb-3">
+                {% if field.errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{field.errors}}
+                  </div>
+                {% endif %}
+                
+            <label for="{{field.auto_id}}" class="form-label">{{field.label}}</label>
+            {{field}}
+          </div>
+            {% endfor %}
+            {% csrf_token %}
+        <button type="submit" class="btn btn-primary">Send</button>
+      </form>
 {% endblock content %}
 
 

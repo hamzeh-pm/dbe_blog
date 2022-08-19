@@ -1,0 +1,6 @@
+<h5>latest posts</h5>
+{% for post in latest_posts %}
+<ul class="list-group list-group-flush">
+    <li class="list-group-item"><a href="{% url 'blog:post_detail' post.slug %}">{{post}}</a></li>
+  </ul>
+{% endfor %}

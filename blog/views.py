@@ -1,12 +1,15 @@
 from typing import Optional
 
+from django.contrib.postgres.search import SearchVector
 from django.core.mail import send_mail
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, render
 from django.views.generic import ListView
+from taggit.models import Tag
 
-from .forms import EmailPostForm
-from .models import Post
+from .forms import CommentForm, EmailPostForm
+from .models import Comment, Post
 
 
 def post_list(request):
@@ -24,7 +27,37 @@ def post_list(request):
 
 def post_detail(request, slug):
     post = get_object_or_404(Post, slug=slug, status="published")
-    return render(request, "blog/post/detail.html", {"post": post})
+    post_tags_ids = post.tags.values_list("id", flat=True)
+    similar_post = Post.published.filter(tags__in=post_tags_ids).exclude(id=post.id)
+    print(similar_post)
+    similar_post = similar_post.annotate(same_tags=Count("tags")).order_by(
+        "-same_tags", "-publish"
+    )[:4]
+
+    # list of active comment
+    comments = Comment.objects.filter(active=True)
+    new_comment = None
+
+    if request.method == "POST":
+        comment_form = CommentForm(data=request.POST)
+        if comment_form.is_valid():
+            new_comment = comment_form.save(commit=False)
+            new_comment.post = post
+            new_comment.save()
+    else:
+        comment_form = CommentForm()
+
+    return render(
+        request,
+        "blog/post/detail.html",
+        {
+            "post": post,
+            "comments": comments,
+            "new_comment": new_comment,
+            "comment_form": comment_form,
+            "similar_post": similar_post,
+        },
+    )
 
 
 class PostList(ListView):
@@ -32,6 +65,35 @@ class PostList(ListView):
     paginate_by: int = 3
     context_object_name: Optional[str] = "posts"
     template_name: str = "blog/post/list.html"
+
+    def get_queryset(self):
+        tag_slug = self.kwargs.get("tag_slug")
+        search_phrase = self.request.GET.get("search")
+        print(search_phrase)
+        if tag_slug:
+            tag = get_object_or_404(Tag, slug=tag_slug)
+            return super().get_queryset().filter(tags__in=[tag])
+
+        if search_phrase:
+            return (
+                super()
+                .get_queryset()
+                .annotate(search_vector=SearchVector("title", "body"))
+                .filter(search_vector=search_phrase)
+            )
+
+        return super().get_queryset()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["tag_list"] = Tag.objects.all()
+
+        tag_slug = self.kwargs.get("tag_slug")
+        if tag_slug:
+            tag = get_object_or_404(Tag, slug=tag_slug)
+            context["tag"] = tag
+
+        return context
 
 
 def post_share(request, post_id):
