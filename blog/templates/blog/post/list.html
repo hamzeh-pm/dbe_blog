@@ -35,6 +35,8 @@ My Blog
 
 {% block sidebar %}
 <h2>My Blog</h2>
+<p>Search</p>
+<a href="{% url 'blog:post_search' %}">Search</a>
 <p>Total Posts {% total_posts %}</p>
 {% include 'blog/tags.html' with tags=tag_list %}
 
